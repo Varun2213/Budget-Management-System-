@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>💰 Budget Management System</title>
+
+
+
+<style>
+/* ══════════════════ RESET & BASE ══════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1565C0;--primary-dark:#0D47A1;--primary-light:#E3F2FD;
+  --success:#2E7D32;--success-light:#E8F5E9;
+  --warn:#E65100;--warn-light:#FFF3E0;
+  --danger:#C62828;--danger-light:#FFEBEE;
+  --purple:#6A1B9A;--purple-light:#F3E5F5;
+  --teal:#00695C;--teal-light:#E0F2F1;
+  --gray:#37474F;--gray-light:#ECEFF1;
+  --border:#E0E0E0;--text:#212121;--text2:#616161;
+  --bg:#F5F7FA;--white:#FFFFFF;
+  --sidebar-w:240px;--header-h:58px;
+  --shadow:0 2px 8px rgba(0,0,0,.1);
+  --radius:8px;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:var(--text);background:var(--bg);height:100vh;overflow:hidden}
+
+/* ══════════════════ LAYOUT ══════════════════ */
+#app{display:flex;height:100vh;flex-direction:column}
+#header{height:var(--header-h);background:var(--primary);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:100}
+#header .logo{font-size:20px}
+#header h1{font-size:16px;font-weight:700;color:#FFF;flex:1}
+#header .user-info{font-size:11px;color:rgba(255,255,255,.75);text-align:right}
+#header .user-info strong{display:block;color:#FFF;font-size:12px}
+
+#body{display:flex;flex:1;overflow:hidden}
+
+/* ══════════════════ SIDEBAR ══════════════════ */
+#sidebar{width:var(--sidebar-w);background:var(--primary-dark);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.nav-section{padding:12px 0 4px}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;padding:0 18px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;color:rgba(255,255,255,.75);cursor:pointer;transition:.15s;font-size:13px;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#FFF}
+.nav-item.active{background:rgba(255,255,255,.14);color:#FFF;border-left-color:#90CAF9}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.nav-divider{height:1px;background:rgba(255,255,255,.1);margin:8px 16px}
+
+/* ══════════════════ MAIN CONTENT ══════════════════ */
+#main{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}
+.page.active{display:block}
+
+/* ══════════════════ PAGE HEADER ══════════════════ */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:18px;font-weight:700;color:var(--primary)}
+.page-subtitle{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ══════════════════ FILTER BAR ══════════════════ */
+.filter-bar{background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px;min-width:140px}
+.filter-group label{font-size:11px;font-weight:600;color:var(--text2)}
+.filter-bar select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#FAFAFA;min-width:130px}
+.filter-bar select:focus{outline:none;border-color:var(--primary)}
+.btn{padding:7px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--primary);color:#FFF}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#FFF}
+.btn-success:hover{background:#1B5E20}
+.btn-warn{background:var(--warn);color:#FFF}
+.btn-warn:hover{background:#BF360C}
+.btn-danger{background:var(--danger);color:#FFF}
+.btn-danger:hover{background:#B71C1C}
+.btn-ghost{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+.btn-ghost:hover{background:var(--primary-light)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-icon{padding:5px 8px;font-size:14px;background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--text2)}
+.btn-icon:hover{background:var(--gray-light)}
+
+/* ══════════════════ CARDS ══════════════════ */
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-weight:700;font-size:14px;color:var(--primary)}
+.card-body{padding:16px 18px}
+
+/* ══════════════════ STAT CARDS ══════════════════ */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+.stat-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;align-items:center;gap:14px}
+.stat-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.stat-icon.blue{background:var(--primary-light)}
+.stat-icon.green{background:var(--success-light)}
+.stat-icon.red{background:var(--danger-light)}
+.stat-icon.purple{background:var(--purple-light)}
+.stat-val{font-size:18px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* ══════════════════ TABLE ══════════════════ */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--primary);color:#FFF}
+thead th{padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:.1s}
+tbody tr:hover{background:#F8FAFE}
+tbody tr:last-child{border-bottom:none}
+td{padding:9px 12px;vertical-align:middle}
+.td-num{text-align:right;font-variant-numeric:tabular-nums}
+.tr-subtotal{background:#EEF2FF!important;font-weight:600}
+.tr-total{background:var(--primary-light)!important;font-weight:700}
+
+/* ══════════════════ BADGES ══════════════════ */
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-draft{background:#FFF9C4;color:#F57F17}
+.badge-submitted{background:#E3F2FD;color:#1565C0}
+.badge-approved{background:#E8F5E9;color:#2E7D32}
+.badge-locked{background:#ECEFF1;color:#546E7A}
+.badge-revision{background:#FFF3E0;color:#E65100}
+.badge-active{background:#E8F5E9;color:#2E7D32}
+
+/* ══════════════════ FORM ══════════════════ */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:12px;font-weight:600;color:var(--gray)}
+.form-group select,.form-group input,.form-group textarea{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#FAFAFA;width:100%}
+.form-group select:focus,.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);background:#FFF}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-row{display:flex;gap:12px;align-items:flex-start}
+.form-full{grid-column:1/-1}
+
+/* Month grid */
+.month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.month-cell label{font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px}
+.month-cell input{padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:right;width:100%}
+.month-cell input:focus{outline:none;border-color:var(--primary)}
+
+/* ══════════════════ MODAL ══════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#FFF;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);width:90%;max-width:720px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column}
+.modal-sm{max-width:440px}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:15px;font-weight:700;color:var(--primary)}
+.modal-body{padding:20px;flex:1}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);line-height:1}
+.close-btn:hover{color:var(--text)}
+
+/* ══════════════════ CHART AREA ══════════════════ */
+.chart-container{position:relative;height:280px;width:100%}
+
+/* ══════════════════ ALERTS ══════════════════ */
+.alert{padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.alert-success{background:var(--success-light);color:var(--success);border-left:3px solid var(--success)}
+.alert-error{background:var(--danger-light);color:var(--danger);border-left:3px solid var(--danger)}
+.alert-info{background:var(--primary-light);color:var(--primary);border-left:3px solid var(--primary)}
+.alert-warn{background:var(--warn-light);color:var(--warn);border-left:3px solid var(--warn)}
+
+/* ══════════════════ LOADER ══════════════════ */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-wrap{display:flex;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--text2)}
+
+/* ══════════════════ MISC ══════════════════ */
+.empty-state{text-align:center;padding:50px 20px;color:var(--text2)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.text-right{text-align:right}
+.text-center{text-align:center}
+.text-green{color:var(--success);font-weight:600}
+.text-red{color:var(--danger);font-weight:600}
+.flex{display:flex}
+.gap-8{gap:8px}
+.mt-12{margin-top:12px}
+.mb-16{margin-bottom:16px}
+.inr{font-variant-numeric:tabular-nums}
+.section-divider{height:1px;background:var(--border);margin:16px 0}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:var(--gray-light);color:var(--gray)}
+
+
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <div id="header">
+    <div class="logo">💰</div>
+    <h1 id="appTitle">Budget Management System</h1>
+    <div class="user-info">
+      <strong id="userName">Loading...</strong>
+      <span id="userRole">—</span>
+    </div>
+  </div>
+
+  <div id="body">
+    <!-- ═══════════════ SIDEBAR ═══════════════ -->
+    <div id="sidebar">
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <div class="nav-item active" onclick="nav('dashboard')"><span class="icon">🏠</span> Dashboard</div>
+        <div class="nav-item" onclick="nav('budget')"><span class="icon">📝</span> Budget Entry</div>
+        <div class="nav-item" onclick="nav('actual')"><span class="icon">📊</span> Actual Entry</div>
+        <div class="nav-item" onclick="nav('variance')"><span class="icon">📉</span> Variance</div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-label">Reports</div>
+        <div class="nav-item" onclick="nav('kpi')"><span class="icon">📈</span> KPI Dashboard</div>
+        <div class="nav-item" onclick="nav('comparison')"><span class="icon">🔄</span> Multi-FY Compare</div>
+        <div class="nav-item" onclick="nav('consolidated')"><span class="icon">🏢</span> Consolidated</div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-label">Admin</div>
+        <div class="nav-item" onclick="nav('approval')"><span class="icon">✅</span> Approval</div>
+        <div class="nav-item" onclick="nav('users')"><span class="icon">👥</span> Users & Roles</div>
+        <div class="nav-item" onclick="nav('audit')"><span class="icon">📜</span> Audit Log</div>
+        <div class="nav-item" onclick="nav('settings')"><span class="icon">⚙️</span> Settings</div>
+        <div class="nav-item" onclick="nav('masterdata')"><span class="icon">🗄️</span> Master Data</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MAIN ═══════════════ -->
+    <div id="main">
+      <div id="globalAlert" style="display:none"></div>
+
+      <!-- ── DASHBOARD ── -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div><div class="page-title">🏠 Dashboard</div><div class="page-subtitle">Budget overview & quick access</div></div>
+        </div>
+        <!-- Filter -->
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="db-company" onchange="dashLoad()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="db-fy" onchange="dashLoad()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="db-dept" onchange="dashLoad()"></select></div>
+          <div class="filter-group"><label>Module</label><select id="db-module" onchange="dashLoad()"></select></div>
+        </div>
+        <div class="stats-grid" id="dashStats">
+          <div class="loading-wrap"><div class="spinner"></div> Loading...</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📅 Month-wise Budget vs Actual</span></div>
+          <div class="card-body"><div class="chart-container"><canvas id="chartMonthly"></canvas></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-header"><span class="card-title">🏗 By Project Type</span></div>
+            <div class="card-body"><div class="chart-container" style="height:220px"><canvas id="chartPT"></canvas></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">✅ Approval Status</span></div>
+            <div class="card-body" id="dashApproval"><div class="loading-wrap"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BUDGET ENTRY ── -->
+      <div class="page" id="page-budget">
+        <div class="page-header">
+          <div><div class="page-title">📝 Budget Entry</div><div class="page-subtitle">Add and manage budget line items</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="openImportModal(false)" title="Import CSV">📥 Import</button>
+            <button class="btn btn-ghost" onclick="exportCSV(false)" title="Export CSV">📤 Export</button>
+            <button class="btn btn-primary" onclick="openEntryModal(false)">➕ Add Entry</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="be-company" onchange="loadBudgetTable()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="be-fy" onchange="loadBudgetTable()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="be-dept" onchange="loadBudgetTable()"></select></div>
+          <div class="filter-group"><label>Module</label><select id="be-module" onchange="loadBudgetTable()"></select></div>
+          <button class="btn btn-ghost" onclick="loadBudgetTable()">🔄 Refresh</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Budget Entries</span>
+            <span id="be-count" class="tag">0 rows</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-wrap" id="budgetTableWrap"><div class="loading-wrap"><div class="spinner"></div> Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ACTUAL ENTRY ── -->
+      <div class="page" id="page-actual">
+        <div class="page-header">
+          <div><div class="page-title">📊 Actual Entry</div><div class="page-subtitle">Record actual monthly values</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="openImportModal(true)" title="Import CSV">📥 Import</button>
+            <button class="btn btn-ghost" onclick="exportCSV(true)" title="Export CSV">📤 Export</button>
+            <button class="btn btn-success" onclick="openEntryModal(true)">➕ Add Actual</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="ae-company" onchange="loadActualTable()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="ae-fy" onchange="loadActualTable()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="ae-dept" onchange="loadActualTable()"></select></div>
+          <div class="filter-group"><label>Module</label><select id="ae-module" onchange="loadActualTable()"></select></div>
+          <button class="btn btn-ghost" onclick="loadActualTable()">🔄 Refresh</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Actual Entries</span><span id="ae-count" class="tag">0 rows</span></div>
+          <div class="card-body p-0">
+            <div class="table-wrap" id="actualTableWrap"><div class="loading-wrap"><div class="spinner"></div> Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VARIANCE ── -->
+      <div class="page" id="page-variance">
+        <div class="page-header"><div><div class="page-title">📉 Variance Analysis</div><div class="page-subtitle">Budget vs Actual comparison</div></div></div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="va-company" onchange="loadVariance()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="va-fy" onchange="loadVariance()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="va-dept" onchange="loadVariance()"></select></div>
+          <div class="filter-group"><label>Module</label><select id="va-module" onchange="loadVariance()"></select></div>
+          <button class="btn btn-ghost" onclick="loadVariance()">🔄 Refresh</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Month-wise Variance</span></div>
+          <div class="card-body p-0"><div class="table-wrap" id="varianceTable"><div class="loading-wrap"><div class="spinner"></div></div></div></div>
+        </div>
+      </div>
+
+      <!-- ── KPI DASHBOARD ── -->
+      <div class="page" id="page-kpi">
+        <div class="page-header"><div><div class="page-title">📈 KPI Dashboard</div><div class="page-subtitle">Visual charts and analytics</div></div></div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="kpi-company" onchange="loadKPI()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="kpi-fy" onchange="loadKPI()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="kpi-dept" onchange="loadKPI()"></select></div>
+          <div class="filter-group"><label>Module</label><select id="kpi-module" onchange="loadKPI()"></select></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Monthly Budget vs Actual (₹)</span></div><div class="card-body"><div class="chart-container"><canvas id="kpiMonthly"></canvas></div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card"><div class="card-header"><span class="card-title">Budget by Project Type</span></div><div class="card-body"><div class="chart-container" style="height:240px"><canvas id="kpiPT"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Variance by Month</span></div><div class="card-body"><div class="chart-container" style="height:240px"><canvas id="kpiVar"></canvas></div></div></div>
+        </div>
+      </div>
+
+      <!-- ── MULTI FY ── -->
+      <div class="page" id="page-comparison">
+        <div class="page-header"><div><div class="page-title">🔄 Multi-FY Comparison</div><div class="page-subtitle">Year-on-year budget analysis</div></div></div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="mfy-company" onchange="loadMultiFY()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="mfy-dept" onchange="loadMultiFY()"></select></div>
+          <div class="filter-group"><label>Module</label><select id="mfy-module" onchange="loadMultiFY()"></select></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Annual Budget vs Actual — All FYs</span></div><div class="card-body"><div class="chart-container"><canvas id="chartMFY"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">FY-wise Data Table</span></div><div class="card-body p-0"><div class="table-wrap" id="mfyTable"></div></div></div>
+      </div>
+
+      <!-- ── CONSOLIDATED ── -->
+      <div class="page" id="page-consolidated">
+        <div class="page-header"><div><div class="page-title">🏢 Consolidated View</div><div class="page-subtitle">All departments in one view</div></div></div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="con-company" onchange="loadConsolidated()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="con-fy" onchange="loadConsolidated()"></select></div>
+          <button class="btn btn-ghost" onclick="loadConsolidated()">🔄 Refresh</button>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">All Departments Summary</span></div><div class="card-body p-0"><div class="table-wrap" id="conTable"><div class="loading-wrap"><div class="spinner"></div></div></div></div></div>
+      </div>
+
+      <!-- ── APPROVAL ── -->
+      <div class="page" id="page-approval">
+        <div class="page-header"><div><div class="page-title">✅ Approval Workflow</div><div class="page-subtitle">Manage budget approvals</div></div></div>
+        <div class="filter-bar">
+          <div class="filter-group"><label>Company</label><select id="ap-company" onchange="loadApproval()"></select></div>
+          <div class="filter-group"><label>Financial Year</label><select id="ap-fy" onchange="loadApproval()"></select></div>
+          <div class="filter-group"><label>Department</label><select id="ap-dept"></select></div>
+          <div class="filter-group"><label>Module</label><select id="ap-module"></select></div>
+          <button class="btn btn-ghost" onclick="loadApproval()">🔄 Load Status</button>
+        </div>
+        <!-- Lock status banner -->
+        <div id="lockBanner" style="display:none;padding:12px 16px;border-radius:8px;margin-bottom:14px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:10px"></div>
+        <div class="card" id="approvalCard"><div class="card-body"><div class="loading-wrap"><div class="spinner"></div></div></div></div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div class="page" id="page-users">
+        <div class="page-header">
+          <div><div class="page-title">👥 Users & Roles</div><div class="page-subtitle">Manage access control</div></div>
+          <button class="btn btn-primary" onclick="openUserModal()">➕ Add User</button>
+        </div>
+        <div class="card"><div class="card-body p-0"><div class="table-wrap" id="usersTable"><div class="loading-wrap"><div class="spinner"></div></div></div></div></div>
+      </div>
+
+      <!-- ── AUDIT LOG ── -->
+      <div class="page" id="page-audit">
+        <div class="page-header"><div><div class="page-title">📜 Audit Log</div><div class="page-subtitle">Complete change history</div></div><button class="btn btn-ghost" onclick="loadAudit()">🔄 Refresh</button></div>
+        <div class="card"><div class="card-body p-0"><div class="table-wrap" id="auditTable"><div class="loading-wrap"><div class="spinner"></div></div></div></div></div>
+      </div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="page" id="page-settings">
+        <div class="page-header"><div><div class="page-title">⚙️ Settings</div><div class="page-subtitle">System configuration</div></div></div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📧 Email Configuration</span></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group"><label>Finance Admin Email</label><input type="email" id="set-admin-email" placeholder="finance@company.com"></div>
+              <div class="form-group"><label>HR HOD Email</label><input type="email" id="set-hr-email" placeholder="hr@company.com"></div>
+              <div class="form-group"><label>Sales HOD Email</label><input type="email" id="set-sales-email" placeholder="sales@company.com"></div>
+              <div class="form-group"><label>Other HOD Email</label><input type="email" id="set-other-email" placeholder="other@company.com"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">⚙️ System Options</span></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group"><label>Email Notifications</label><select id="set-email-notif"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+              <div class="form-group"><label>Audit Logging</label><select id="set-audit"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+              <div class="form-group"><label>Submission Deadline (Day)</label><select id="set-deadline"></select></div>
+            </div>
+          </div>
+        </div>
+        <div id="settingsAlert"></div>
+        <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+      </div>
+
+
+      <!-- ── MASTER DATA ── -->
+      <div class="page" id="page-masterdata">
+        <div class="page-header">
+          <div><div class="page-title">🗄️ Master Data Management</div>
+          <div class="page-subtitle">Finance Admin — Companies, FY, Departments, Modules, Categories manage karo</div></div>
+        </div>
+
+        <!-- Master type tabs -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="masterTypeTabs">
+          <button class="btn btn-primary" onclick="selectMasterType('Company')">🏢 Companies</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('FY')">📅 Financial Years</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('Department')">🏬 Departments</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('Module')">📦 Modules</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('ProjectType')">🏗️ Project Types</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('MainHead')">📂 Main Heads</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('SubHead')">📁 Sub Heads</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('SubSubHead')">📄 Sub-Sub Heads</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('Category')">🏷️ Categories</button>
+          <button class="btn btn-ghost" onclick="selectMasterType('SiteName')">📍 Site Names</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="masterCardTitle">Select a type above</span>
+            <button class="btn btn-primary btn-sm" id="masterAddBtn" onclick="openMasterModal()" style="display:none">➕ Add New</button>
+          </div>
+          <div class="card-body">
+            <div id="masterParentFilter" style="display:none;margin-bottom:12px">
+              <label style="font-size:12px;font-weight:600;color:var(--gray);margin-right:8px">Filter by Parent:</label>
+              <select id="masterParentSel" onchange="renderMasterTable()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"></select>
+            </div>
+            <div id="masterAlert" style="margin-bottom:8px"></div>
+            <!-- Normal table view (for non-Category types) -->
+            <div class="table-wrap" id="masterTableWrap">
+              <div class="empty-state"><div class="icon">🗄️</div><div>Select a type from above to manage</div></div>
+            </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<!-- ═══════════════ ENTRY MODAL ═══════════════ -->
+<div class="overlay" id="entryOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="entryModalTitle">➕ Add Budget Entry</span>
+      <button class="close-btn" onclick="closeModal('entryOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="entryAlert"></div>
+      <div class="form-grid mb-16">
+        <div class="form-group"><label>Company</label><select id="em-company"></select></div>
+        <div class="form-group"><label>Financial Year</label><select id="em-fy"></select></div>
+        <div class="form-group"><label>Department</label><select id="em-dept" onchange="emDeptChange()"></select></div>
+        <div class="form-group"><label>Module</label><select id="em-module" onchange="emModuleChange()"></select></div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="form-grid mb-16">
+        <div class="form-group"><label>Project Type</label><select id="em-pt"></select></div>
+        <div class="form-group"><label>Main Head</label><select id="em-mh"></select></div>
+        <div class="form-group"><label>Sub Head</label><select id="em-sh" onchange="emSHChange()"></select></div>
+        <div class="form-group"><label>Sub-Sub Head</label><select id="em-ssh" onchange="emSSHChange()"></select></div>
+        <div class="form-group"><label>Category</label><select id="em-cat"></select></div>
+        <div class="form-group"><label>📍 Site Name</label><select id="em-sitename"><option value="">-- Select Site --</option></select></div>
+        <div class="form-group"><label>Row Status</label><select id="em-status"><option>Active</option><option>Hold</option><option>Cancelled</option></select></div>
+        <div class="form-group form-full"><label>Notes / Justification</label><textarea id="em-notes" placeholder="e.g. Based on headcount plan..."></textarea></div>
+      </div>
+      <div class="section-divider"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <input type="checkbox" id="em-recurring" onchange="emRecurringChange()">
+        <label for="em-recurring" style="font-weight:600;cursor:pointer">🔄 Recurring — same amount all 12 months</label>
+        <input type="number" id="em-rec-val" placeholder="Amount ₹" style="display:none;max-width:150px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+      </div>
+      <div id="em-month-area">
+        <div class="month-grid" id="em-months"></div>
+      </div>
+      <input type="hidden" id="em-id">
+      <input type="hidden" id="em-isActual">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('entryOverlay')">Cancel</button>
+      <button class="btn btn-primary" id="emSaveBtn" onclick="saveEntry()">💾 Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ USER MODAL ═══════════════ -->
+<div class="overlay" id="userOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title" id="userModalTitle">➕ Add User</span>
+      <button class="close-btn" onclick="closeModal('userOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="userAlert"></div>
+      <div class="form-grid">
+        <div class="form-group form-full"><label>Email Address</label><input type="email" id="um-email" placeholder="user@company.com"></div>
+        <div class="form-group form-full"><label>Full Name</label><input type="text" id="um-name" placeholder="Full Name"></div>
+        <div class="form-group"><label>Role</label><select id="um-role"></select></div>
+        <div class="form-group"><label>Company</label><select id="um-company"></select></div>
+        <div class="form-group"><label>Department</label><select id="um-dept"></select></div>
+        <div class="form-group"><label>Status</label><select id="um-status"><option>Active</option><option>Inactive</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('userOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">💾 Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APPROVAL CONFIRM MODAL ═══════════════ -->
+<div class="overlay" id="apConfirmOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title" id="apConfirmTitle">Confirm Action</span><button class="close-btn" onclick="closeModal('apConfirmOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Remarks (optional)</label><textarea id="ap-remarks" placeholder="Add remarks..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('apConfirmOverlay')">Cancel</button>
+      <button class="btn btn-primary" id="apConfirmBtn" onclick="confirmApprovalAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ MASTER DATA MODAL ═══════════════ -->
+<div class="overlay" id="masterOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title" id="masterModalTitle">➕ Add Item</span>
+      <button class="close-btn" onclick="closeModal('masterOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="masterModalAlert"></div>
+      <div class="form-group" id="masterParentGroup" style="display:none">
+        <label id="masterParentLabel">Parent</label>
+        <select id="mm-parent"></select>
+      </div>
+      <div class="form-group">
+        <label id="masterValueLabel">Value</label>
+        <input type="text" id="mm-value" placeholder="Enter name...">
+      </div>
+      <input type="hidden" id="mm-type">
+      <input type="hidden" id="mm-oldvalue">
+      <input type="hidden" id="mm-mode"> <!-- add / edit -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('masterOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMasterItem()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script>
+// ══════════════════════════════════════════════
+//  APP STATE
+// ══════════════════════════════════════════════
+let CFG = null;
+let charts = {};
+let pendingApprovalAction = null;
+const MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  gsr('api_getConfig', null, cfg => {
+    CFG = cfg;
+    document.getElementById('appTitle').textContent = cfg.appName;
+    document.getElementById('userName').textContent = cfg.currentUser || 'User';
+    document.getElementById('userRole').textContent = cfg.userRole || 'Viewer';
+
+    // Populate all filter selects
+    const allSelects = {
+      companies : ['db-company','be-company','ae-company','va-company','kpi-company','mfy-company','con-company','ap-company','em-company','um-company'],
+      fyLabels  : ['db-fy','be-fy','ae-fy','va-fy','kpi-fy','con-fy','ap-fy','em-fy'],
+      departments: ['db-dept','be-dept','ae-dept','va-dept','kpi-dept','mfy-dept','ap-dept','em-dept','um-dept'],
+      modules   : ['db-module','be-module','ae-module','va-module','kpi-module','mfy-module','ap-module','em-module'],
+      roles     : ['um-role']
+    };
+    Object.entries(allSelects).forEach(([key, ids]) => {
+      const items = cfg[key] || [];
+      ids.forEach(id => fillSel(id, items));
+    });
+
+    // Populate Site Names dropdown
+    if (cfg.siteNames && cfg.siteNames.length) {
+      const snSel = document.getElementById('em-sitename');
+      if (snSel) {
+        cfg.siteNames.forEach(s => {
+          const o = document.createElement('option');
+          o.value = s; o.text = s;
+          snSel.appendChild(o);
+        });
+      }
+    }
+
+    // Dept: add 'All' option to user modal
+    const umDept = document.getElementById('um-dept');
+    if (umDept) { const opt = document.createElement('option'); opt.value='All'; opt.text='All'; umDept.prepend(opt); }
+
+    // Set latest FY as default
+    const latestFY = cfg.fyLabels[cfg.fyLabels.length-1];
+    ['db-fy','be-fy','ae-fy','va-fy','kpi-fy','con-fy','ap-fy','em-fy'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = latestFY;
+    });
+
+    // Build month inputs in modal
+    buildMonthInputs();
+    emDeptChange();  // SubHead depends on Department now
+
+    // Load dashboard
+    dashLoad();
+    loadUsers();
+    loadAudit();
+    loadSettings();
+  });
+});
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function nav(page) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[onclick="nav('${page}')"]`);
+  if (navEl) navEl.classList.add('active');
+  const pageEl = document.getElementById('page-'+page);
+  if (pageEl) pageEl.classList.add('active');
+
+  const loaders = {
+    budget:'loadBudgetTable', actual:'loadActualTable', variance:'loadVariance',
+    kpi:'loadKPI', comparison:'loadMultiFY', consolidated:'loadConsolidated',
+    approval:'loadApproval', audit:'loadAudit', settings:'loadSettings'
+  };
+  if (loaders[page]) window[loaders[page]]();
+}
+
+// ══════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════
+function dashLoad() {
+  const [company,fy,dept,module_] = getFilters('db');
+  gsr('api_getMonthlyTotals',[company,fy,dept,module_], data => {
+    if(!data.ok) return;
+    const d = data.data;
+    const totalBudget = d.reduce((a,r)=>a+r.budget,0);
+    const totalActual = d.reduce((a,r)=>a+r.actual,0);
+    const variance = totalBudget-totalActual;
+    document.getElementById('dashStats').innerHTML = `
+      <div class="stat-card"><div class="stat-icon blue">💰</div><div><div class="stat-val">${inr(totalBudget)}</div><div class="stat-lbl">Total Budget</div></div></div>
+      <div class="stat-card"><div class="stat-icon green">📊</div><div><div class="stat-val">${inr(totalActual)}</div><div class="stat-lbl">Total Actual</div></div></div>
+      <div class="stat-card"><div class="stat-icon ${variance>=0?'blue':'red'}">${variance>=0?'✅':'❌'}</div><div><div class="stat-val ${variance>=0?'text-green':'text-red'}">${inr(Math.abs(variance))}</div><div class="stat-lbl">Variance ${variance>=0?'(Under)':'(Over)'}</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple">📈</div><div><div class="stat-val">${d.length}</div><div class="stat-lbl">Months Tracked</div></div></div>`;
+    drawChart('chartMonthly','bar',
+      MONTHS, [{label:'Budget',data:d.map(r=>r.budget),backgroundColor:'#1565C0AA',borderColor:'#1565C0',borderWidth:1},
+               {label:'Actual',data:d.map(r=>r.actual),backgroundColor:'#2E7D32AA',borderColor:'#2E7D32',borderWidth:1}]);
+  });
+  gsr('api_getSummaryByProjectType',[company,fy,dept,module_], data => {
+    if(!data.ok||!data.data.length) return;
+    drawChart('chartPT','doughnut',
+      data.data.map(r=>r.projectType), [{data:data.data.map(r=>r.budget),
+      backgroundColor:['#1565C0','#2E7D32','#E65100']}]);
+  });
+  gsr('api_getApprovalStatus',[company,fy,dept,module_], data => {
+    if(!data.ok) return;
+    const s = data.data;
+    document.getElementById('dashApproval').innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:40px;margin-bottom:10px">${statusIcon(s.status)}</div>
+        <div class="badge badge-${s.status.toLowerCase().replace(' ','-')}" style="font-size:14px;padding:6px 16px">${s.status||'Draft'}</div>
+        ${s.submittedBy?`<p style="margin-top:12px;font-size:12px;color:var(--text2)">Submitted by: <strong>${s.submittedBy}</strong></p>`:''}
+        ${s.approvedBy?`<p style="font-size:12px;color:var(--text2)">Approved by: <strong>${s.approvedBy}</strong></p>`:''}
+        ${s.remarks?`<p style="font-size:11px;color:var(--text2);margin-top:6px;font-style:italic">"${s.remarks}"</p>`:''}
+      </div>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  BUDGET / ACTUAL TABLE
+// ══════════════════════════════════════════════
+function loadBudgetTable() { loadEntryTable(false); }
+function loadActualTable()  { loadEntryTable(true); }
+
+function loadEntryTable(isActual) {
+  const prefix = isActual?'ae':'be';
+  const [company,fy,dept,module_] = getFilters(prefix);
+  const wrapId = isActual?'actualTableWrap':'budgetTableWrap';
+  const cntId  = isActual?'ae-count':'be-count';
+  document.getElementById(wrapId).innerHTML = '<div class="loading-wrap"><div class="spinner"></div> Loading...</div>';
+  const fn = isActual?'api_getActualEntries':'api_getBudgetEntries';
+  gsr(fn,[company,fy,dept,module_], data => {
+    if(!data.ok) { document.getElementById(wrapId).innerHTML = alertHtml(data.msg,'error'); return; }
+    const rows = data.data;
+    document.getElementById(cntId).textContent = rows.length+' rows';
+    if(!rows.length){ document.getElementById(wrapId).innerHTML = emptyState('No entries found','Add entries using the ➕ button above'); return; }
+    const grandTotal = rows.reduce((a,r)=>a+(Number(r.total)||0),0);
+    document.getElementById(wrapId).innerHTML = `<table>
+      <thead><tr><th>Project Type</th><th>Sub Head</th><th>Category</th><th>Site Name</th><th>Notes</th>
+        ${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>Total</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr>
+          <td><span class="tag">${r.projectType}</span></td>
+          <td>${r.subHead}</td><td>${r.category}</td>
+          <td style="font-size:12px">${r.siteName||'—'}</td>
+          <td style="max-width:120px;font-size:11px;color:var(--text2)">${r.notes||'—'}</td>
+          ${MONTHS.map(m=>`<td class="td-num">${inr(r[m])}</td>`).join('')}
+          <td class="td-num"><strong>${inr(r.total)}</strong></td>
+          <td><button class="btn-icon" onclick="editEntry('${r.id}',${isActual})" title="Edit">✏️</button>
+              <button class="btn-icon" onclick="deleteEntry('${r.id}',${isActual})" title="Delete" style="margin-left:4px">🗑️</button></td>
+        </tr>`).join('')}
+        <tr class="tr-total"><td colspan="4"><strong>Grand Total</strong></td>
+          <td colspan="${MONTHS.length}" class="td-num"><strong>${inr(grandTotal)}</strong></td><td></td></tr>
+      </tbody></table>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  VARIANCE TABLE
+// ══════════════════════════════════════════════
+function loadVariance() {
+  const [company,fy,dept,module_] = getFilters('va');
+  document.getElementById('varianceTable').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  gsr('api_getMonthlyTotals',[company,fy,dept,module_], data => {
+    if(!data.ok){ document.getElementById('varianceTable').innerHTML=alertHtml(data.msg,'error'); return; }
+    const d = data.data;
+    const totB=d.reduce((a,r)=>a+r.budget,0), totA=d.reduce((a,r)=>a+r.actual,0), totV=totB-totA;
+    document.getElementById('varianceTable').innerHTML = `<table>
+      <thead><tr><th>Month</th><th class="td-num">Budget (₹)</th><th class="td-num">Actual (₹)</th><th class="td-num">Variance (₹)</th><th class="td-num">Var %</th></tr></thead>
+      <tbody>
+        ${d.map(r=>`<tr>
+          <td><strong>${r.month}</strong></td>
+          <td class="td-num">${inr(r.budget)}</td>
+          <td class="td-num">${inr(r.actual)}</td>
+          <td class="td-num ${r.variance>=0?'text-green':'text-red'}">${inr(Math.abs(r.variance))} ${r.variance>=0?'▼':'▲'}</td>
+          <td class="td-num ${r.variance>=0?'text-green':'text-red'}">${r.budget?((r.variance/r.budget*100).toFixed(1))+'%':'—'}</td>
+        </tr>`).join('')}
+        <tr class="tr-total">
+          <td><strong>Total</strong></td>
+          <td class="td-num"><strong>${inr(totB)}</strong></td>
+          <td class="td-num"><strong>${inr(totA)}</strong></td>
+          <td class="td-num ${totV>=0?'text-green':'text-red'}"><strong>${inr(Math.abs(totV))} ${totV>=0?'▼':'▲'}</strong></td>
+          <td class="td-num ${totV>=0?'text-green':'text-red'}"><strong>${totB?((totV/totB*100).toFixed(1))+'%':'—'}</strong></td>
+        </tr>
+      </tbody></table>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  KPI CHARTS
+// ══════════════════════════════════════════════
+function loadKPI() {
+  const [company,fy,dept,module_] = getFilters('kpi');
+  gsr('api_getMonthlyTotals',[company,fy,dept,module_], data => {
+    if(!data.ok) return;
+    const d = data.data;
+    drawChart('kpiMonthly','bar', MONTHS,
+      [{label:'Budget',data:d.map(r=>r.budget),backgroundColor:'#1565C0BB',borderColor:'#1565C0',borderWidth:1},
+       {label:'Actual',data:d.map(r=>r.actual),backgroundColor:'#2E7D32BB',borderColor:'#2E7D32',borderWidth:1}]);
+    drawChart('kpiVar','bar', MONTHS,
+      [{label:'Variance',data:d.map(r=>r.variance),backgroundColor:d.map(r=>r.variance>=0?'#2E7D32AA':'#C62828AA')}]);
+  });
+  gsr('api_getSummaryByProjectType',[company,fy,dept,module_], data => {
+    if(!data.ok||!data.data.length) return;
+    drawChart('kpiPT','pie', data.data.map(r=>r.projectType),
+      [{data:data.data.map(r=>r.budget),backgroundColor:['#1565C0','#2E7D32','#E65100']}]);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  MULTI FY
+// ══════════════════════════════════════════════
+function loadMultiFY() {
+  const company = document.getElementById('mfy-company').value;
+  const dept    = document.getElementById('mfy-dept').value;
+  const module_ = document.getElementById('mfy-module').value;
+  gsr('api_getMultiFYTotals',[company,dept,module_], data => {
+    if(!data.ok) return;
+    const d = data.data;
+    if(!d.length){ document.getElementById('mfyTable').innerHTML=emptyState('No data','Create budgets for multiple FYs first'); return; }
+    drawChart('chartMFY','bar', d.map(r=>r.fy),
+      [{label:'Budget',data:d.map(r=>r.budget),backgroundColor:'#1565C0AA',borderColor:'#1565C0',borderWidth:1},
+       {label:'Actual',data:d.map(r=>r.actual),backgroundColor:'#2E7D32AA',borderColor:'#2E7D32',borderWidth:1},
+       {label:'Variance',data:d.map(r=>r.variance),backgroundColor:'#E65100AA',borderColor:'#E65100',borderWidth:1}]);
+    document.getElementById('mfyTable').innerHTML = `<table>
+      <thead><tr><th>Financial Year</th><th class="td-num">Budget</th><th class="td-num">Actual</th><th class="td-num">Variance</th><th class="td-num">Var %</th></tr></thead>
+      <tbody>${d.map(r=>`<tr><td><strong>${r.fy}</strong></td><td class="td-num">${inr(r.budget)}</td><td class="td-num">${inr(r.actual)}</td>
+        <td class="td-num ${r.variance>=0?'text-green':'text-red'}">${inr(Math.abs(r.variance))}</td>
+        <td class="td-num ${r.variance>=0?'text-green':'text-red'}">${r.budget?((r.variance/r.budget*100).toFixed(1))+'%':'—'}</td></tr>`).join('')}
+      </tbody></table>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  CONSOLIDATED
+// ══════════════════════════════════════════════
+function loadConsolidated() {
+  const company = document.getElementById('con-company').value;
+  const fy      = document.getElementById('con-fy').value;
+  document.getElementById('conTable').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  gsr('api_getConsolidated',[company,fy], data => {
+    if(!data.ok){ document.getElementById('conTable').innerHTML=alertHtml(data.msg,'error'); return; }
+    const rows = data.data;
+    const totB = rows.reduce((a,r)=>a+r.budget,0), totA = rows.reduce((a,r)=>a+r.actual,0);
+    document.getElementById('conTable').innerHTML = `<table>
+      <thead><tr><th>Department</th><th>Module</th><th>Entries</th><th class="td-num">Budget</th><th class="td-num">Actual</th><th class="td-num">Variance</th><th>Status</th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr>
+          <td><strong>${r.dept}</strong></td><td>${r.module_}</td><td class="text-center">${r.entries}</td>
+          <td class="td-num">${inr(r.budget)}</td><td class="td-num">${inr(r.actual)}</td>
+          <td class="td-num ${r.variance>=0?'text-green':'text-red'}">${inr(Math.abs(r.variance))} ${r.variance>=0?'▼':'▲'}</td>
+          <td><span class="badge badge-${r.status.toLowerCase().replace(' ','-')}">${r.status}</span></td>
+        </tr>`).join('')}
+        <tr class="tr-total"><td colspan="3"><strong>Grand Total</strong></td>
+          <td class="td-num"><strong>${inr(totB)}</strong></td><td class="td-num"><strong>${inr(totA)}</strong></td>
+          <td class="td-num ${(totB-totA)>=0?'text-green':'text-red'}"><strong>${inr(Math.abs(totB-totA))}</strong></td><td></td></tr>
+      </tbody></table>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  APPROVAL
+// ══════════════════════════════════════════════
+function loadApproval() {
+  const [company,fy,dept,module_] = getFilters('ap');
+  gsr('api_getApprovalStatus',[company,fy,dept,module_], data => {
+    if(!data.ok) return;
+    const s = data.data;
+    const status = s.status || 'Draft';
+    const isFinance = CFG.userRole === 'Finance Admin';
+    document.getElementById('approvalCard').innerHTML = `<div class="card-header"><span class="card-title">Approval Status</span></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="text-align:center;min-width:120px">
+            <div style="font-size:48px;margin-bottom:8px">${statusIcon(status)}</div>
+            <span class="badge badge-${status.toLowerCase().replace(/ /g,'-')}" style="font-size:13px;padding:5px 14px">${status}</span>
+          </div>
+          <div style="flex:1;min-width:200px">
+            ${s.version?`<p style="margin-bottom:6px"><strong>Version:</strong> V${s.version}</p>`:''}
+            ${s.submittedBy?`<p style="margin-bottom:6px"><strong>Submitted By:</strong> ${s.submittedBy}</p>`:''}
+            ${s.submittedOn?`<p style="margin-bottom:6px"><strong>Submitted On:</strong> ${fmtDate(s.submittedOn)}</p>`:''}
+            ${s.approvedBy?`<p style="margin-bottom:6px"><strong>Approved By:</strong> ${s.approvedBy}</p>`:''}
+            ${s.approvedOn?`<p style="margin-bottom:6px"><strong>Approved On:</strong> ${fmtDate(s.approvedOn)}</p>`:''}
+            ${s.remarks?`<p style="margin-bottom:6px;font-style:italic;color:var(--text2)"><strong>Remarks:</strong> "${s.remarks}"</p>`:''}
+          </div>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+          ${status==='Draft'||status==='Revision Required'?`<button class="btn btn-primary" onclick="apAction('submit')">📤 Submit for Approval</button>`:''}
+          ${isFinance&&status==='Submitted'?`<button class="btn btn-success" onclick="apAction('approve')">✅ Approve</button>`:''}
+          ${isFinance&&status==='Submitted'?`<button class="btn btn-warn" onclick="apAction('revision')">🔄 Request Revision</button>`:''}
+          ${isFinance&&status==='Approved'?`<button class="btn btn-ghost" onclick="apAction('lock')">🔒 Lock Budget</button>`:''}
+        </div>
+      </div>`;
+  });
+}
+
+let _apActionData = null;
+function apAction(action) {
+  _apActionData = {action, company:document.getElementById('ap-company').value,
+    fy:document.getElementById('ap-fy').value, dept:document.getElementById('ap-dept').value,
+    module_:document.getElementById('ap-module').value};
+  const titles = {submit:'Submit for Approval',approve:'Approve & Lock',revision:'Request Revision',lock:'Lock Budget'};
+  document.getElementById('apConfirmTitle').textContent = titles[action];
+  document.getElementById('ap-remarks').value = '';
+  document.getElementById('apConfirmOverlay').classList.add('show');
+}
+
+function confirmApprovalAction() {
+  if(!_apActionData) return;
+  const {action,company,fy,dept,module_} = _apActionData;
+  const remarks = document.getElementById('ap-remarks').value;
+  const fnMap = {submit:'api_submitForApproval',approve:'api_approveBudget',revision:'api_requestRevision',lock:'api_lockBudget'};
+  const args = action==='revision'?[company,fy,dept,module_,remarks]:[company,fy,dept,module_,remarks];
+  gsr(fnMap[action], args, data => {
+    closeModal('apConfirmOverlay');
+    if(data.ok){ showGlobalAlert('Action completed successfully!','success'); loadApproval(); dashLoad(); }
+    else showGlobalAlert(data.msg,'error');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  USERS
+// ══════════════════════════════════════════════
+function loadUsers() {
+  gsr('api_getUsers', null, data => {
+    if(!data.ok){ document.getElementById('usersTable').innerHTML=alertHtml(data.msg,'error'); return; }
+    const users = data.data;
+    if(!users.length){ document.getElementById('usersTable').innerHTML=emptyState('No users','Add users using ➕ button'); return; }
+    document.getElementById('usersTable').innerHTML = `<table>
+      <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Company</th><th>Dept</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${users.map(u=>`<tr>
+        <td>${u.email}</td><td>${u.name}</td>
+        <td><span class="tag">${u.role}</span></td>
+        <td>${u.company}</td><td>${u.dept}</td>
+        <td><span class="badge badge-${u.status==='Active'?'active':'draft'}">${u.status}</span></td>
+        <td><button class="btn-icon" onclick="deleteUser('${u.email}')" title="Remove">🗑️</button></td>
+      </tr>`).join('')}</tbody></table>`;
+  });
+}
+
+function openUserModal() {
+  document.getElementById('userModalTitle').textContent='➕ Add User';
+  ['um-email','um-name'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('userOverlay').classList.add('show');
+}
+
+function saveUser() {
+  const user = {
+    email: document.getElementById('um-email').value.trim(),
+    name:  document.getElementById('um-name').value.trim(),
+    role:  document.getElementById('um-role').value,
+    company:document.getElementById('um-company').value,
+    dept:  document.getElementById('um-dept').value,
+    status:document.getElementById('um-status').value
+  };
+  if(!user.email||!user.name){ showAlert('userAlert','Email and Name are required','error'); return; }
+  gsr('api_saveUser',[JSON.stringify(user)], data=>{
+    if(data.ok){ closeModal('userOverlay'); loadUsers(); showGlobalAlert('User saved!','success'); }
+    else showAlert('userAlert',data.msg,'error');
+  });
+}
+
+function deleteUser(email) {
+  if(!confirm('Remove user: '+email+'?')) return;
+  gsr('api_deleteUser',[email], data=>{
+    if(data.ok){ loadUsers(); showGlobalAlert('User removed','success'); }
+    else showGlobalAlert(data.msg,'error');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  AUDIT LOG
+// ══════════════════════════════════════════════
+function loadAudit() {
+  gsr('api_getAuditLog', null, data => {
+    if(!data.ok){ document.getElementById('auditTable').innerHTML=alertHtml(data.msg,'error'); return; }
+    const logs = data.data;
+    if(!logs.length){ document.getElementById('auditTable').innerHTML=emptyState('No audit entries','Entries appear as you use the system'); return; }
+    document.getElementById('auditTable').innerHTML = `<table>
+      <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+      <tbody>${logs.map(l=>`<tr>
+        <td style="white-space:nowrap;font-size:11px">${fmtDate(l.timestamp)}</td>
+        <td style="font-size:11px">${l.user}</td>
+        <td><span class="tag">${l.action}</span></td>
+        <td style="font-size:11px">${l.entity}</td>
+        <td style="font-size:11px;color:var(--text2);max-width:200px">${(l.details||'').substring(0,80)}</td>
+      </tr>`).join('')}</tbody></table>`;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════
+function loadSettings() {
+  gsr('api_getSettings', null, data => {
+    if(!data.ok) return;
+    const s = data.data;
+    document.getElementById('set-admin-email').value = s.FINANCE_ADMIN_EMAIL||'';
+    document.getElementById('set-hr-email').value    = s.HR_HOD_EMAIL||'';
+    document.getElementById('set-sales-email').value = s.SALES_HOD_EMAIL||'';
+    document.getElementById('set-other-email').value = s.OTHER_HOD_EMAIL||'';
+    const en = document.getElementById('set-email-notif'); if(en) en.value=s.EMAIL_NOTIFICATIONS||'true';
+    const au = document.getElementById('set-audit');       if(au) au.value=s.AUDIT_ENABLED||'true';
+  });
+}
+
+function saveSettings() {
+  const s = {
+    FINANCE_ADMIN_EMAIL: document.getElementById('set-admin-email').value,
+    HR_HOD_EMAIL:        document.getElementById('set-hr-email').value,
+    SALES_HOD_EMAIL:     document.getElementById('set-sales-email').value,
+    OTHER_HOD_EMAIL:     document.getElementById('set-other-email').value,
+    EMAIL_NOTIFICATIONS: document.getElementById('set-email-notif').value,
+    AUDIT_ENABLED:       document.getElementById('set-audit').value
+  };
+  gsr('api_saveSettings',[JSON.stringify(s)], data=>{
+    const el = document.getElementById('settingsAlert');
+    el.innerHTML = data.ok ? alertHtml('Settings saved successfully!','success') : alertHtml(data.msg,'error');
+    el.style.display='block';
+    setTimeout(()=>el.style.display='none',3000);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  ENTRY MODAL
+// ══════════════════════════════════════════════
+function buildMonthInputs() {
+  document.getElementById('em-months').innerHTML = MONTHS.map(m=>
+    `<div class="month-cell"><label>${m}</label><input type="number" id="em-m-${m}" placeholder="0" min="0"></div>`
+  ).join('');
+}
+
+function openEntryModal(isActual, editData) {
+  document.getElementById('em-id').value = editData?editData.id:'';
+  document.getElementById('em-isActual').value = isActual?'1':'0';
+  document.getElementById('entryModalTitle').textContent = (editData?'✏️ Edit':'➕ Add') + (isActual?' Actual':' Budget') + ' Entry';
+  document.getElementById('entryAlert').innerHTML='';
+  // Sync filters from current active page
+  const prefix = isActual?'ae':'be';
+  ['company','fy','dept','module'].forEach(k=>{
+    const src = document.getElementById(prefix+'-'+k);
+    const tgt = document.getElementById('em-'+k);
+    if(src&&tgt) tgt.value=src.value;
+  });
+  emModuleChange();
+  if(editData){
+    ['pt','mh','sh','ssh','cat','status','notes'].forEach(k=>{
+      const map={pt:'projectType',mh:'mainHead',sh:'subHead',ssh:'subSubHead',cat:'category',status:'status',notes:'notes'};
+      const el=document.getElementById('em-'+k); if(el) el.value=editData[map[k]]||'';
+    });
+    const snEl=document.getElementById('em-sitename'); if(snEl) snEl.value=editData.siteName||'';
+    // Re-cascade subheads for this dept
+    const deptSel=document.getElementById('em-dept');
+    if(deptSel && editData.dept) { deptSel.value=editData.dept; emDeptChange(); }
+    // Then restore selected values after cascade
+    setTimeout(()=>{
+      const shEl=document.getElementById('em-sh'); if(shEl) shEl.value=editData.subHead||'';
+      emSHChange();
+      setTimeout(()=>{
+        const sshEl=document.getElementById('em-ssh'); if(sshEl) sshEl.value=editData.subSubHead||'';
+        emSSHChange();
+        setTimeout(()=>{
+          const catEl=document.getElementById('em-cat');
+          if(catEl) catEl.value=editData.category||'';
+        },0);
+      },0);
+    },0);
+    MONTHS.forEach(m=>{ const el=document.getElementById('em-m-'+m); if(el) el.value=editData[m]||0; });
+  } else {
+    MONTHS.forEach(m=>{ const el=document.getElementById('em-m-'+m); if(el) el.value=''; });
+    document.getElementById('em-notes').value='';
+    document.getElementById('em-sitename').value='';
+    document.getElementById('em-recurring').checked=false;
+    const catInput = document.getElementById('em-cat'); if(catInput) catInput.value='';
+    document.getElementById('em-rec-val').style.display='none';
+    document.getElementById('em-month-area').style.display='block';
+  }
+  document.getElementById('entryOverlay').classList.add('show');
+}
+
+function editEntry(id, isActual) {
+  const fn = isActual?'api_getActualEntries':'api_getBudgetEntries';
+  const prefix = isActual?'ae':'be';
+  const [company,fy,dept,module_] = getFilters(prefix);
+  gsr(fn,[company,fy,dept,module_], data=>{
+    if(!data.ok) return;
+    const row = data.data.find(r=>r.id===id);
+    if(row) openEntryModal(isActual, row);
+  });
+}
+
+function emModuleChange() {
+  if(!CFG) return;
+  // Module change does NOT affect SubHead hierarchy (dept controls it)
+  // Just ensure project types and main heads are loaded
+  fillSel('em-pt', CFG.projectTypes||[]);
+  fillSel('em-mh', CFG.mainHeads||[]);
+}
+
+function emDeptChange() {
+  if(!CFG) return;
+  const dept = document.getElementById('em-dept').value;
+  const shs  = CFG.subHeads[dept] || [];
+  fillSel('em-sh', shs);
+  emSHChange();
+  fillSel('em-pt', CFG.projectTypes||[]);
+  fillSel('em-mh', CFG.mainHeads||[]);
+  // Reset category trail when dept changes
+  const catEl = document.getElementById('em-cat'); if(catEl) catEl.value='';
+}
+
+function emSHChange() {
+  if(!CFG) return;
+  const sh   = document.getElementById('em-sh').value;
+  const sshs = CFG.subSubHeads[sh] || [];
+  fillSel('em-ssh', sshs);
+  emSSHChange();
+}
+
+function emSSHChange() {
+  if(!CFG) return;
+  const ssh  = document.getElementById('em-ssh').value;
+  const cats = CFG.categories[ssh] || [];
+  fillSel('em-cat', cats);
+}
+
+
+
+
+
+function emRecurringChange() {
+  const checked = document.getElementById('em-recurring').checked;
+  document.getElementById('em-rec-val').style.display = checked?'inline-block':'none';
+  document.getElementById('em-month-area').style.display = checked?'none':'block';
+}
+
+function saveEntry() {
+  const isActual = document.getElementById('em-isActual').value==='1';
+  const recurring = document.getElementById('em-recurring').checked;
+  const recVal = Number(document.getElementById('em-rec-val').value)||0;
+  const entry = {
+    id: document.getElementById('em-id').value||null,
+    company: document.getElementById('em-company').value,
+    fy:      document.getElementById('em-fy').value,
+    dept:    document.getElementById('em-dept').value,
+    module:  document.getElementById('em-module').value,
+    projectType: document.getElementById('em-pt').value,
+    mainHead:    document.getElementById('em-mh').value,
+    subHead:     document.getElementById('em-sh').value,
+    subSubHead:  document.getElementById('em-ssh').value,
+    category:    document.getElementById('em-cat').value,
+    siteName:    document.getElementById('em-sitename').value.trim(),
+    recurring:   recurring,
+    notes:       document.getElementById('em-notes').value,
+    status:      document.getElementById('em-status').value
+  };
+  MONTHS.forEach(m=>{ entry[m] = recurring ? recVal : (Number(document.getElementById('em-m-'+m).value)||0); });
+  if(!entry.category){ showAlert('entryAlert','Please select a Category','error'); return; }
+  document.getElementById('emSaveBtn').disabled=true;
+  gsr('api_saveBudgetEntry',[JSON.stringify(entry), isActual], data=>{
+    document.getElementById('emSaveBtn').disabled=false;
+    if(data.ok){
+      closeModal('entryOverlay');
+      isActual ? loadActualTable() : loadBudgetTable();
+      showGlobalAlert('Entry saved successfully!','success');
+      dashLoad();
+    } else showAlert('entryAlert', data.msg,'error');
+  });
+}
+
+function deleteEntry(id, isActual) {
+  if(!confirm('Delete this entry? This cannot be undone.')) return;
+  gsr('api_deleteBudgetEntry',[id, isActual], data=>{
+    if(data.ok){ isActual?loadActualTable():loadBudgetTable(); showGlobalAlert('Entry deleted','success'); }
+    else showGlobalAlert(data.msg,'error');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  CHART HELPER
+// ══════════════════════════════════════════════
+function drawChart(id, type, labels, datasets) {
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(canvas, {
+    type, data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:ctx=>' ₹'+inrNum(ctx.raw)}}},
+      scales: (type==='bar'||type==='line') ? {y:{ticks:{callback:v=>'₹'+inrNum(v)}}} : undefined
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════
+function gsr(fnName, args, cb) {
+  let runner = google.script.run.withSuccessHandler(cb).withFailureHandler(e=>showGlobalAlert('Error: '+e.message,'error'));
+  if(args && args.length) runner[fnName](...args);
+  else runner[fnName]();
+}
+
+function getFilters(prefix) {
+  return ['company','fy','dept','module'].map(k=>{
+    const el = document.getElementById(prefix+'-'+k); return el?el.value:'';
+  });
+}
+
+function fillSel(id, items) {
+  const el = document.getElementById(id); if(!el) return;
+  el.innerHTML = items.map(v=>`<option value="${v}">${v}</option>`).join('');
+}
+
+function inr(n) {
+  if(!n&&n!==0) return '₹0';
+  return '₹'+inrNum(Math.round(n));
+}
+
+function inrNum(n) {
+  if(!n&&n!==0) return '0';
+  const x = Math.abs(Math.round(n));
+  let s=x.toString(), r=s.slice(-3); s=s.slice(0,-3);
+  while(s.length>0){ r=s.slice(-2)+','+r; s=s.slice(0,-2); }
+  return (n<0?'-':'')+r;
+}
+
+function fmtDate(iso) {
+  if(!iso) return '—';
+  try{ const d=new Date(iso); return d.toLocaleDateString('en-IN')+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+  catch(e){ return iso; }
+}
+
+function statusIcon(s) {
+  return {Draft:'📝',Submitted:'📤',Approved:'✅',Locked:'🔒','Revision Required':'🔄'}[s]||'📝';
+}
+
+function alertHtml(msg, type) {
+  return `<div class="alert alert-${type}">${msg}</div>`;
+}
+
+function emptyState(title, sub) {
+  return `<div class="empty-state"><div class="icon">📭</div><div style="font-weight:600;margin-bottom:6px">${title}</div><div style="font-size:11px">${sub}</div></div>`;
+}
+
+function showAlert(id, msg, type) {
+  const el=document.getElementById(id); if(el) el.innerHTML=alertHtml(msg,type);
+}
+
+function showGlobalAlert(msg, type) {
+  const el=document.getElementById('globalAlert');
+  el.innerHTML=alertHtml(msg,type); el.style.display='block';
+  setTimeout(()=>el.style.display='none',4000);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+
+
+// ══════════════════════════════════════════════
+//  MASTER DATA MANAGEMENT
+// ══════════════════════════════════════════════
+let _masterType = null;
+let _masterData = [];
+
+const MASTER_CONFIG = {
+  Company     : { label:'Company',      parentType: null,       parentLabel: null },
+  FY          : { label:'Financial Year', parentType: null,     parentLabel: null },
+  Department  : { label:'Department',   parentType: null,       parentLabel: null },
+  Module      : { label:'Module',       parentType: null,       parentLabel: null },
+  ProjectType : { label:'Project Type', parentType: null,       parentLabel: null },
+  MainHead    : { label:'Main Head',    parentType: null,       parentLabel: null },
+  SubHead     : { label:'Sub Head',     parentType: 'Department', parentLabel: 'Department' },  // Dept-wise
+  SubSubHead  : { label:'Sub-Sub Head', parentType: 'SubHead',  parentLabel: 'Sub Head' },
+  Category    : { label:'Category',     parentType: 'SubSubHead',parentLabel:'Sub-Sub Head' },
+  SiteName    : { label:'Site Name',    parentType: null,        parentLabel: null }
+};
+
+function selectMasterType(type) {
+  _masterType = type;
+
+  // Update tab buttons styling
+  document.querySelectorAll('#masterTypeTabs .btn').forEach(b => {
+    b.className = b.getAttribute('onclick').includes("'"+type+"'") ? 'btn btn-primary' : 'btn btn-ghost';
+  });
+
+  const cfg = MASTER_CONFIG[type];
+  document.getElementById('masterCardTitle').textContent = (cfg ? cfg.label : type) + ' Management';
+  document.getElementById('masterAddBtn').style.display = CFG.userRole === 'Finance Admin' ? 'inline-flex' : 'none';
+
+  // Toggle views
+  const tableWrap   = document.getElementById('masterTableWrap');
+  const parentFilter = document.getElementById('masterParentFilter');
+
+  // ── FY: special managed view ──
+  if (type === 'FY') {
+      parentFilter.style.display = 'none';
+    renderFYManager();
+    return;
+  }
+
+  // ── All other types: normal table ──
+  if (cfg && cfg.parentType) {
+    parentFilter.style.display = 'block';
+    loadParentOptions(cfg.parentType);
+  } else {
+    parentFilter.style.display = 'none';
+  }
+
+  loadMasterData();
+}
+
+function loadMasterData() {
+  document.getElementById('masterTableWrap').innerHTML = '<div class="loading-wrap"><div class="spinner"></div> Loading...</div>';
+  gsr('api_getMasterData', null, data => {
+    if (!data.ok) { document.getElementById('masterTableWrap').innerHTML = alertHtml(data.msg, 'error'); return; }
+    _masterData = data.data;
+    renderMasterTable();
+  });
+}
+
+function loadParentOptions(parentType) {
+  gsr('api_getMasterData', null, data => {
+    if (!data.ok) return;
+    const parents = data.data.filter(r => r.type === parentType && r.status === 'Active');
+    const sel = document.getElementById('masterParentSel');
+    sel.innerHTML = '<option value="">-- All --</option>' + parents.map(p => `<option value="${p.value}">${p.value}</option>`).join('');
+  });
+}
+
+function renderMasterTable() {
+  if (_masterType === 'FY') { renderFYManager(); return; }
+  const cfg        = MASTER_CONFIG[_masterType];
+  const parentFilter = document.getElementById('masterParentSel').value;
+  let rows = _masterData.filter(r => r.type === _masterType);
+  if (parentFilter) rows = rows.filter(r => r.parentValue === parentFilter);
+
+  if (!rows.length) {
+    document.getElementById('masterTableWrap').innerHTML = emptyState('No items found', 'Click ➕ Add New to create one');
+    return;
+  }
+
+  const isAdmin = CFG.userRole === 'Finance Admin';
+  const showParent = cfg && cfg.parentType;
+
+  document.getElementById('masterTableWrap').innerHTML = `<table>
+    <thead><tr>
+      <th>#</th>
+      ${showParent ? `<th>${cfg.parentLabel}</th>` : ''}
+      <th>Name / Value</th>
+      <th>Status</th>
+      <th>Created By</th>
+      ${isAdmin ? '<th>Actions</th>' : ''}
+    </tr></thead>
+    <tbody>
+      ${rows.map((r, i) => `<tr>
+        <td style="color:var(--text2)">${i+1}</td>
+        ${showParent ? `<td><span class="tag">${r.parentValue||'—'}</span></td>` : ''}
+        <td><strong>${r.value}</strong></td>
+        <td><span class="badge badge-${r.status==='Active'?'active':'draft'}">${r.status}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${r.createdBy||'System'}</td>
+        ${isAdmin ? `<td>
+          <button class="btn-icon" onclick="editMasterItem('${r.type}','${r.value.replace(/'/g,"\'")}','${(r.parentValue||'').replace(/'/g,"\'")}','${r.status}')" title="Edit">✏️</button>
+          <button class="btn-icon" onclick="deleteMasterItem('${r.type}','${r.value.replace(/'/g,"\'")}','${(r.parentValue||'').replace(/'/g,"\'")}' )" title="Deactivate" style="margin-left:4px">🗑️</button>
+        </td>` : ''}
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderFYManager() {
+  const isAdmin = CFG.userRole === 'Finance Admin';
+  document.getElementById('masterAddBtn').style.display = 'none'; // FY has its own UI
+  const curYear = new Date().getFullYear();
+  const curM    = new Date().getMonth();
+  const curFYStart = curM >= 3 ? curYear : curYear - 1;
+  const years = [];
+  for (let y = 2020; y <= curFYStart + 5; y++) years.push(y);
+
+  document.getElementById('masterTableWrap').innerHTML = `
+    <div style="padding:12px">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Financial Years are auto-generated. Select which years are <strong>Active</strong> in your system.</p>
+      <table>
+        <thead><tr><th>#</th><th>Financial Year</th><th>Status</th>${isAdmin?'<th>Action</th>':''}</tr></thead>
+        <tbody>
+          ${years.map((y,i) => {
+            const label = 'FY '+y+'-'+(y+1);
+            const isActive = y >= 2024 && y <= curFYStart + 1;
+            return `<tr>
+              <td style="color:var(--text2)">${i+1}</td>
+              <td><strong>${label}</strong>${y===curFYStart?` <span class="tag" style="background:#E8F5E9;color:#2E7D32">Current</span>`:''}${y===curFYStart+1?` <span class="tag" style="background:#E3F2FD;color:#1565C0">Next</span>`:''}</td>
+              <td><span class="badge badge-${isActive?'active':'draft'}">${isActive?'Active':'Inactive'}</span></td>
+              ${isAdmin?`<td><span style="font-size:11px;color:var(--text2)">Auto-managed</span></td>`:''}
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      ${isAdmin ? `<div style="margin-top:16px;padding:12px;background:var(--primary-light);border-radius:6px;font-size:12px">
+        💡 <strong>Note:</strong> FY range automatically covers FY 2024-25 to FY ${curFYStart+1}-${curFYStart+2}. 
+        Users can select any of these in dropdowns. No manual management needed.
+      </div>` : ''}
+    </div>`;
+}
+
+function openMasterModal(type, oldValue, parentValue, status, isEdit) {
+  const t = type || _masterType;
+  if (!t) { showAlert('masterAlert','Please select a type first','error'); return; }
+  const cfg = MASTER_CONFIG[t];
+  document.getElementById('mm-type').value     = t;
+  document.getElementById('mm-mode').value     = isEdit ? 'edit' : 'add';
+  document.getElementById('mm-oldvalue').value = oldValue || '';
+  document.getElementById('mm-value').value    = isEdit ? (oldValue||'') : '';
+  document.getElementById('masterModalTitle').textContent = (isEdit ? '✏️ Edit ' : '➕ Add ') + (cfg ? cfg.label : t);
+  document.getElementById('masterValueLabel').textContent = (cfg ? cfg.label : t) + ' Name';
+  document.getElementById('masterModalAlert').innerHTML = '';
+
+  // Parent dropdown
+  if (cfg && cfg.parentType) {
+    document.getElementById('masterParentGroup').style.display = 'block';
+    document.getElementById('masterParentLabel').textContent   = cfg.parentLabel;
+    const parentItems = _masterData.filter(r => r.type === cfg.parentType && r.status === 'Active');
+    const sel = document.getElementById('mm-parent');
+    sel.innerHTML = parentItems.map(p => `<option value="${p.value}" ${p.value===parentValue?'selected':''}>${p.value}</option>`).join('');
+    if (!parentItems.length) {
+      showAlert('masterModalAlert', '⚠️ No ' + cfg.parentLabel + ' found. Please create ' + cfg.parentLabel + ' first.', 'warn');
+    }
+  } else {
+    document.getElementById('masterParentGroup').style.display = 'none';
+  }
+  document.getElementById('masterOverlay').classList.add('show');
+}
+
+function editMasterItem(type, value, parentValue, status) {
+  openMasterModal(type, value, parentValue, status, true);
+}
+
+function saveMasterItem() {
+  const type      = document.getElementById('mm-type').value;
+  const mode      = document.getElementById('mm-mode').value;
+  const value     = document.getElementById('mm-value').value.trim();
+  const oldValue  = document.getElementById('mm-oldvalue').value;
+  const cfg       = MASTER_CONFIG[type];
+  const parentVal = (cfg && cfg.parentType) ? document.getElementById('mm-parent').value : '';
+
+  if (!value) { showAlert('masterModalAlert','Please enter a value','error'); return; }
+
+  if (mode === 'edit') {
+    gsr('api_updateMasterItem', [type, oldValue, value, parentVal, 'Active'], data => {
+      if (data.ok) {
+        closeModal('masterOverlay');
+        loadMasterData();
+        refreshConfigDropdowns();
+        showGlobalAlert(type + ' updated successfully!', 'success');
+      } else showAlert('masterModalAlert', data.msg, 'error');
+    });
+  } else {
+    gsr('api_addMasterItem', [type, value, parentVal], data => {
+      if (data.ok) {
+        closeModal('masterOverlay');
+        loadMasterData();
+        refreshConfigDropdowns();
+        showGlobalAlert(type + ' "' + value + '" added successfully!', 'success');
+      } else showAlert('masterModalAlert', data.msg, 'error');
+    });
+  }
+}
+
+function deleteMasterItem(type, value, parentValue) {
+  if (!confirm('Deactivate "' + value + '"? It will no longer appear in dropdowns.')) return;
+  gsr('api_deleteMasterItem', [type, value, parentValue], data => {
+    if (data.ok) {
+      loadMasterData();
+      refreshConfigDropdowns();
+      showGlobalAlert('"' + value + '" deactivated', 'success');
+    } else showGlobalAlert(data.msg, 'error');
+  });
+}
+
+/* Refresh all dropdowns across pages after master data change */
+function refreshConfigDropdowns() {
+  gsr('api_getConfig', null, cfg => {
+    CFG = {...CFG, ...cfg};
+    // Re-populate all filter selects
+    const maps = {
+      companies   : ['db-company','be-company','ae-company','va-company','kpi-company','mfy-company','con-company','ap-company','em-company','um-company'],
+      fyLabels    : ['db-fy','be-fy','ae-fy','va-fy','kpi-fy','con-fy','ap-fy','em-fy'],
+      departments : ['db-dept','be-dept','ae-dept','va-dept','kpi-dept','mfy-dept','ap-dept','em-dept','um-dept'],
+      modules     : ['db-module','be-module','ae-module','va-module','kpi-module','mfy-module','ap-module','em-module']
+    };
+    Object.entries(maps).forEach(([key, ids]) => {
+      const items = cfg[key] || [];
+      ids.forEach(id => fillSel(id, items));
+    });
+    emDeptChange();
+  showGlobalAlert('Dropdowns refreshed with latest master data!', 'success');
+  });
+}
+
+// Add masterdata to nav loader
+const _origNav = nav;
+
+// Extend nav to load masterdata
+document.addEventListener('DOMContentLoaded', () => {
+  const origNav = window.nav;
+  window.nav = function(page) {
+    origNav(page);
+    if (page === 'masterdata') {
+      _masterType = null;
+      _masterData = [];
+      document.getElementById('masterCardTitle').textContent = 'Select a type above';
+      document.getElementById('masterAddBtn').style.display = 'none';
+      document.getElementById('masterTableWrap').innerHTML = '<div class="empty-state"><div class="icon">🗄️</div><div>Select a type from above to manage</div></div>';
+    }
+  };
+});
+
+
+// ══════════════════════════════════════════════
+//  CATEGORY BROWSER (Option B)
+//  Department → SubHead → SubSubHead → Category
+// ══════════════════════════════════════════════
+
+
+/* ── Open browser overlay ── */
+
+
+/* ── Render full tree ── */
+
+
+/* ── Toggle Department row ── */
+
+
+/* ── Toggle Sub Head row ── */
+
+
+/* ── Toggle Sub-Sub Head row ── */
+
+
+/* ── Select a Category ── */
+
+
+/* ── Update breadcrumb path bar ── */
+
+
+/* ── Update footer confirm button ── */
+
+
+/* ── Confirm selection — set form values ── */
+
+
+/* ── Search filter ── */
+
+
+/* ── Reset cat browser fields on modal open ── */
+
+
+
+// Close modal on overlay click
+document.querySelectorAll('.overlay').forEach(el=>{
+  el.addEventListener('click', e=>{ if(e.target===el) el.classList.remove('show'); });
+});
+
+// Deadline select — build options dynamically
+const dlSel = document.getElementById('set-deadline');
+if(dlSel){ [5,10,15,20,25,28].forEach(d=>{ const o=document.createElement('option'); o.value=d; o.text=d+'th'; dlSel.appendChild(o); }); }
+</script>
+</body>
+</html>
